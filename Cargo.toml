@@ -1,0 +1,21 @@
+[package]
+name = "prism"
+version = "0.2.0"
+edition = "2021"
+description = "Prism — instant file search for Windows. 820 KB, no service, no background process, answers in milliseconds."
+license = "MIT"
+
+[[bin]]
+name = "prism"
+path = "src/main.rs"
+
+[dependencies]
+memmap2 = "0.9"
+ab_glyph = "0.2"
+
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+strip = true

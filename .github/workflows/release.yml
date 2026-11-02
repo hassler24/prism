@@ -31,11 +31,17 @@ jobs:
           New-Item -ItemType Directory -Force -Path (Join-Path $t "sub\deep") | Out-Null
           Set-Content -Path (Join-Path $t "alpha.txt") -Value "a"
           Set-Content -Path (Join-Path $t "sub\deep\beta.md") -Value "b"
-          & target\release\prism.exe --build-index $t
-          & target\release\prism.exe --stats
-          $hits = & target\release\prism.exe --search beta
-          $hits | Select-Object -First 5
-          if (-not ($hits -match "beta")) { throw "search did not find the seeded file" }
+          # A GUI-subsystem exe returns from `&` immediately, so these three calls
+          # would overlap and --stats would race --build-index. Wait for each.
+          $exe = Join-Path (Get-Location) "target\release\prism.exe"
+          Start-Process -FilePath $exe -ArgumentList "--build-index", $t -Wait -NoNewWindow
+          Start-Process -FilePath $exe -ArgumentList "--stats" -Wait -NoNewWindow -RedirectStandardOutput "$t\stats.txt"
+          Get-Content "$t\stats.txt"
+          Start-Process -FilePath $exe -ArgumentList "--search", "beta" -Wait -NoNewWindow -RedirectStandardOutput "$t\hits.txt"
+          Get-Content "$t\hits.txt" | Select-Object -First 5
+          if (-not (Select-String -Path "$t\hits.txt" -Pattern "beta" -Quiet)) {
+            throw "search did not find the seeded file"
+          }
 
       - name: Stage
         shell: pwsh

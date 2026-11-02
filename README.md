@@ -38,10 +38,10 @@ with hand-rolled Win32 — no GUI framework, no WebView, no GPU process.
 
 ## 60-second start
 
-1. **Download** [`prism.exe`](https://github.com/hassler24/prism/releases/latest/download/prism.exe)
-   directly — one click, 820 KB, no installer — or grab the
-   [zip](https://github.com/hassler24/prism/releases/latest) and unpack it.
-   Drop it anywhere.
+1. **Download** the zip from the
+   [latest release](https://github.com/hassler24/prism/releases/latest) — 413 KB,
+   one file inside, `prism.exe` (820 KB). Drop it anywhere. No installer, no
+   dependencies.
 2. **Double-click it.** The first launch indexes your drives (~2–3 min for a
    million files). Every launch after that starts in **half a second**.
 3. **Type.** Results appear as you type — no Enter, no waiting.

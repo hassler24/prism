@@ -1,0 +1,45 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Tests
+        run: cargo test --workspace --release
+
+      - name: Build
+        run: cargo build --release
+
+      - name: Smoke test the binary
+        run: |
+          & target\release\prism.exe --stats
+          & target\release\prism.exe --search "prism" | Select-Object -First 5
+
+      - name: Stage
+        shell: pwsh
+        run: |
+          $v = if ($env:GITHUB_REF -like "refs/tags/*") { $env:GITHUB_REF -replace "refs/tags/", "" } else { "v0.0.0-dev" }
+          Copy-Item target\release\prism.exe "prism-$v-x86_64-pc-windows-msvc.zip-staging.exe"
+          Compress-Archive -Path "prism-$v-x86_64-pc-windows-msvc.zip-staging.exe" -DestinationPath "prism-$v-x86_64-pc-windows-msvc.zip"
+          Remove-Item "prism-$v-x86_64-pc-windows-msvc.zip-staging.exe"
+          "zip=prism-$v-x86_64-pc-windows-msvc.zip" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Attach to the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.zip }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

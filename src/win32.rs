@@ -456,13 +456,33 @@ extern "system" {
 }
 
 /// Give CLI modes a console when the release binary is built as a GUI app.
+///
+/// Three launch shapes have to work:
+///
+/// * **a real terminal** — the GUI subsystem means the child got no console of its
+///   own, so attach to the parent's and reopen `CONOUT$`/`CONIN$` for the three
+///   standard handles, which are NULL in that case.
+/// * **redirected to a pipe or file** (`prism --search x > out.txt`, a CI step) —
+///   the standard handles are *valid pipe handles* and must be left alone. This is
+///   the case the first version got wrong: `AttachConsole` can succeed even with a
+///   redirected pipe, and then `CONOUT$` replaced a working pipe with a console
+///   nobody reads, so every `println!` vanished and `--search` looked broken.
+/// * **double-clicked with no arguments** — no console wanted, nothing happens.
 pub fn ensure_cli_console() {
     unsafe {
+        // A handle that is already set (a pipe, a file, NUL) is the caller's; only
+        // NULL means "GUI child of a console, please wire me up".
+        let valid = |h: HANDLE| !h.is_null() && h != INVALID_HANDLE_VALUE;
+        if valid(GetStdHandle(STD_OUTPUT_HANDLE))
+            && valid(GetStdHandle(STD_ERROR_HANDLE))
+            && valid(GetStdHandle(STD_INPUT_HANDLE))
+        {
+            return;
+        }
         if AttachConsole(ATTACH_PARENT_PROCESS) == 0 {
             return;
         }
-        let valid = |h: HANDLE| !h.is_null() && h != INVALID_HANDLE_VALUE;
-        if !valid(GetStdHandle(STD_OUTPUT_HANDLE)) {
+        if !valid(GetStdHandle(STD_OUTPUT_HANDLE)) || !valid(GetStdHandle(STD_ERROR_HANDLE)) {
             let name = wide("CONOUT$");
             let out = CreateFileW(
                 name.as_ptr(),
@@ -474,8 +494,12 @@ pub fn ensure_cli_console() {
                 std::ptr::null_mut(),
             );
             if valid(out) {
-                SetStdHandle(STD_OUTPUT_HANDLE, out);
-                SetStdHandle(STD_ERROR_HANDLE, out);
+                if !valid(GetStdHandle(STD_OUTPUT_HANDLE)) {
+                    SetStdHandle(STD_OUTPUT_HANDLE, out);
+                }
+                if !valid(GetStdHandle(STD_ERROR_HANDLE)) {
+                    SetStdHandle(STD_ERROR_HANDLE, out);
+                }
             }
         }
         if !valid(GetStdHandle(STD_INPUT_HANDLE)) {

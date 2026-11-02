@@ -23,9 +23,19 @@ jobs:
         run: cargo build --release
 
       - name: Smoke test the binary
+        shell: pwsh
         run: |
+          # A runner has no index, so build one over a throwaway tree instead of
+          # the whole machine — this exercises the walker, assembler and search.
+          $t = Join-Path $env:RUNNER_TEMP "prism-smoke"
+          New-Item -ItemType Directory -Force -Path (Join-Path $t "sub\deep") | Out-Null
+          Set-Content -Path (Join-Path $t "alpha.txt") -Value "a"
+          Set-Content -Path (Join-Path $t "sub\deep\beta.md") -Value "b"
+          & target\release\prism.exe --build-index $t
           & target\release\prism.exe --stats
-          & target\release\prism.exe --search "prism" | Select-Object -First 5
+          $hits = & target\release\prism.exe --search beta
+          $hits | Select-Object -First 5
+          if (-not ($hits -match "beta")) { throw "search did not find the seeded file" }
 
       - name: Stage
         shell: pwsh

@@ -38,20 +38,25 @@ with hand-rolled Win32 — no GUI framework, no WebView, no GPU process.
 
 ## 60-second start
 
-1. **Download** `prism.exe` from the
-   [latest release](https://github.com/hassler24/prism/releases) and drop it
-   anywhere. No installer, no dependencies.
+1. **Download** [`prism.exe`](https://github.com/hassler24/prism/releases/latest/download/prism.exe)
+   directly — one click, 820 KB, no installer — or grab the
+   [zip](https://github.com/hassler24/prism/releases/latest) and unpack it.
+   Drop it anywhere.
 2. **Double-click it.** The first launch indexes your drives (~2–3 min for a
    million files). Every launch after that starts in **half a second**.
 3. **Type.** Results appear as you type — no Enter, no waiting.
 
 That is the whole setup. Nothing else to configure.
 
-### The shortcut
+### The easiest way to reach it
 
-Pin `prism.exe` to the taskbar, or keep the shortcut on your desktop — **Win**,
-first letters of its name, **Enter**. From a cold start that is under a second
-to a window with the caret already in the field.
+**Pin it to the taskbar** (right-click the running window, *Pin to taskbar*),
+then from anywhere: **Win**, type `pri`, **Enter**. Under a second, and the
+caret is already in the search field.
+
+There is no global hotkey on purpose — see [Why no global hotkey](#why-no-global-hotkey).
+
+## Why no global hotkey
 
 A global hotkey was deliberately **not** added. Windows will not give a
 permanent key chord to a program that is allowed to be closed, and the only way
